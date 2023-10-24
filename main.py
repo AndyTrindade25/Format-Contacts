@@ -1,44 +1,50 @@
+from flask import Flask, render_template, request, send_file
 import csv
+import io
 
-name_csv = 'contato.csv'
-output_csv = 'contatoFormatado.csv'
+app = Flask(__name__)
 
-ddd = '17'
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        uploaded_file = request.files['csv_file']
+        if uploaded_file.filename != '':
+            ddd = '62'
+            coluna = ['Name', 'Phone 1 - Value']
+            data = []
 
-coluna = ['Name', 'Phone 1 - Value']
+            try:
+                csv_data = uploaded_file.read().decode('utf-8').splitlines()
+                reader_csv = csv.DictReader(csv_data)
 
-data = []
+                for row in reader_csv:
+                    name = row['Name']
+                    phone = row['Phone 1 - Value']
 
-try:
-    with open(name_csv, 'r') as file_csv:
-        reader_csv = csv.DictReader(file_csv)
+                    phone = phone.replace(' ', '').replace('-', '').replace('+','').replace('(','').replace(')','').replace('+','').replace(':','').replace('*','')
 
-        for row in reader_csv:
-            name = row['Name']
-            phone = row['Phone 1 - Value']
+                    if len(phone) <= 13:
+                        if phone.startswith('0'):
+                            phone = '55' + phone[1:]
+                        if len(phone) <= 11:
+                            phone = '55' + ddd + phone
+                        if len(phone) > 9:
+                            data.append([name, phone])
 
-            phone = phone.replace(' ', '').replace('-', '').replace('+','').replace('(','').replace(')','').replace('+','').replace(':','').replace('*','')
+                output_csv = 'contatoFormatado.csv'
+                output_stream = io.StringIO()
+                csv_writer = csv.writer(output_stream)
+                csv_writer.writerow(coluna)
+                csv_writer.writerows(data)
 
-            if len(phone) <= 13:
+                response = send_file(output_stream, as_attachment=True, attachment_filename=output_csv)
+                response.headers["Content-Disposition"] = f"attachment; filename={output_csv}"
+                return response
 
-                if phone.startswith('0'):
-                    phone = '55' + phone[1:]
-                
-                if len(phone) < 10:
-                    phone = '55' + ddd + phone
-                if len(phone) > 9:
-                    data.append([name, phone])
-                
+            except Exception as e:
+                return f'Ocorreu um erro ao processar o arquivo CSV: {str(e)}'
 
-except FileNotFoundError:
-    print(f'O arquivo {name_csv} não foi encontrado!')
+    return render_template('index.html')
 
-except Exception as e:
-    print(f'Ocorreu um erro ao ler o arquivo CSV: {str(e)}')
-
-with open(output_csv, 'w', newline='') as output_file:
-    csv_writer = csv.writer(output_file)
-    csv_writer.writerow(coluna)
-    csv_writer.writerows(data)
-
-print(f'O arquivo formatado foi salvo como: {output_csv}')
+if __name__ == '__main__':
+    app.run(debug=True)
