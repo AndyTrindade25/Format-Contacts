@@ -4,9 +4,10 @@
     <title>CSV File Formatter</title>
 </head>
 <body>
-    <h1>Selecione um arquivo CSV para formatação</h1>
-    <form method="POST" enctype="multipart/form-data">
-        <input type="file" name="csv_file" accept=".csv">
+    <h1>Selecione o arquivo CSV para formatação</h1>
+    <form action="/" method="POST" enctype="multipart/form-data">
+        <input type="file" name="csv_file" accept=".csv"><br />
+        <input type="text" name="ddd" placeholder="Digite o DDD padrão" required> <br />
         <input type="submit" value="Formatar CSV">
     </form>
 </body>
