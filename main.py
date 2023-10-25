@@ -16,8 +16,7 @@ def index():
         if uploaded_file.filename != '':
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
             uploaded_file.save(file_path)
-
-            # Process the uploaded CSV file and save the formatted file
+            
             coluna = ['Name', 'Phone 1 - Value']
             data = []
 
@@ -57,5 +56,5 @@ def index():
 def download(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == '__main__':  
+    app.run(host='0.0.0.0', port=8099)
