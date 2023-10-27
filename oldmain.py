@@ -23,8 +23,10 @@ try:
 
                 if phone.startswith('0'):
                     phone = '55' + phone[1:]
-                
-                if len(phone) <= 11:
+
+                if len(phone) == 11 or len(phone) == 10:
+                    phone = '55' + phone                
+                if len(phone) < 10:
                     phone = '55' + ddd + phone
                 if len(phone) > 9:
                     data.append([name, phone])

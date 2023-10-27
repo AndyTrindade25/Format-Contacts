@@ -5,6 +5,6 @@
 </head>
 <body>
     <h1>Arquivo formatado pronto para download</h1>
-    <a href="/download/{{ filename }}">Baixar Arquivo Formatado</a>
+    <a href="{{ url_for('download', filename=filename) }}">Baixar Arquivo Formatado</a>
 </body>
 </html>
