@@ -1,62 +1,79 @@
-    from flask import Flask, render_template, request, send_from_directory
-    import csv
-    import io
-    import os
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for
+import csv
+import io
+import os
 
-    app = Flask(__name__)
+app = Flask(__name__)
 
-    UPLOAD_FOLDER = 'uploads'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    @app.route('/', methods=['GET', 'POST'])
-    def index():
-        if request.method == 'POST':
-            uploaded_file = request.files['csv_file']
-            ddd = request.form.get('ddd')
-            if uploaded_file.filename != '':
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
-                uploaded_file.save(file_path)
-                
-                coluna = ['Name', 'Phone 1 - Value']
-                data = []
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    headers = []  # Inicialize a variável headers como uma lista vazia
+    if request.method == 'POST':
+        uploaded_file = request.files['csv_file']
+        ddd = request.form.get('ddd')
+        if uploaded_file.filename != '':
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
+            uploaded_file.save(file_path)
+            
+            # Get the CSV headers
+            with open(file_path, 'r') as file_csv:
+                reader_csv = csv.DictReader(file_csv)
+                headers = reader_csv.fieldnames  # Atualize a variável headers com os cabeçalhos do CSV
 
-                try:
-                    with open(file_path, 'r') as file_csv:
-                        reader_csv = csv.DictReader(file_csv)
+    return render_template('index.html', headers=headers)  # Passe headers como um argumento
 
-                        for row in reader_csv:
-                            name = row['Name']
-                            phone = row['Phone 1 - Value']
+@app.route('/', methods=['POST'])
+def process_csv():
+    name_column = request.form.get('name_column')
+    phone_column = request.form.get('phone_column')
+    ddd = request.form.get('ddd')
 
-                            phone = phone.replace(' ', '').replace('-', '').replace('+','').replace('(','').replace(')','').replace('+','').replace(':','').replace('*','')
+    if name_column and phone_column:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
 
-                            if len(phone) <= 13:
-                                if phone.startswith('0'):
-                                    phone = '55' + phone[1:]
-                                if len(phone) == 11 or len(phone) == 10:
-                                    phone = '55' + phone                
-                                if len(phone) < 10:
-                                    phone = '55' + ddd + phone
-                                if len(phone) > 9:
-                                    data.append([name, phone])
+        coluna = [name_column, phone_column]
+        data = []
 
-                    formatted_csv_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contatosFormatados.csv')
+        try:
+            with open(file_path, 'r') as file_csv:
+                reader_csv = csv.DictReader(file_csv)
 
-                    with open(formatted_csv_path, 'w', newline='') as output_file:
-                        csv_writer = csv.writer(output_file)
-                        csv_writer.writerow(coluna)
-                        csv_writer.writerows(data)
+                for row in reader_csv:
+                    name = row[name_column]
+                    phone = row[phone_column]
 
-                    return render_template('download.html', filename='contatosFormatados.csv')
+                    phone = phone.replace(' ', '').replace('-', '').replace('+', '').replace('(', '').replace(')', '').replace('+', '').replace(':', '').replace('*', '')
 
-                except Exception as e:
-                    return f'Ocorreu um erro ao processar o arquivo CSV: {str(e)}'
+                    if len(phone) <= 13:
+                        if phone.startswith('0'):
+                            phone = '55' + phone[1:]
+                        if len(phone) == 11 or len(phone) == 10:
+                            phone = '55' + phone
+                        if len(phone) < 10:
+                            phone = '55' + ddd + phone
+                        if len(phone) > 9:
+                            data.append([name, phone])
 
-        return render_template('index.html')
+            formatted_csv_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contatosFormatados.csv')
 
-    @app.route('/download/<filename>', methods=['GET'])
-    def download(filename):
-        return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+            with open(formatted_csv_path, 'w', newline='') as output_file:
+                csv_writer = csv.writer(output_file)
+                csv_writer.writerow(coluna)
+                csv_writer.writerows(data)
 
-    if __name__ == '__main__':  
-        app.run(host='0.0.0.0', port=8099)
+            return redirect(url_for('download', filename='contatosFormatados.csv'))
+
+        except Exception as e:
+            return f'Ocorreu um erro ao processar o arquivo CSV: {str(e)}'
+
+    return 'Selecione as colunas corretas para o nome e o telefone.'
+
+@app.route('/download/<filename>', methods=['GET'])
+def download(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+
+if __name__ == '__main__':  
+    app.run(host='0.0.0.0', port=8099)

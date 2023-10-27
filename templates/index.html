@@ -7,9 +7,43 @@
 <body>
     <h1>Selecione o arquivo CSV para formatação</h1>
     <form action="/" method="POST" enctype="multipart/form-data">
-        <input type="file" name="csv_file" accept=".csv"><br />
+        <input type="file" name="csv_file" accept=".csv" id="csv_file" onchange="loadHeaders()"><br />
         <input type="text" name="ddd" placeholder="Digite o DDD padrão" required> <br />
+        <label for="name_column">Selecione a coluna do nome:</label>
+        <select name="name_column" id="name_column">
+        </select><br />
+        <label for="phone_column">Selecione a coluna do telefone:</label>
+        <select name="phone_column" id="phone_column">
+        </select><br />
         <input type="submit" value="Formatar CSV">
     </form>
+    <script>
+      function loadHeaders() {
+        var fileInput = document.getElementById('csv_file');
+        var file = fileInput.files[0];
+        if (file) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            var contents = e.target.result;
+            var lines = contents.split('\n');
+            if (lines.length > 0) {
+              var headers = lines[0].split(',');
+              var selectName = document.getElementById('name_column');
+              var selectPhone = document.getElementById('phone_column');
+              selectName.innerHTML = '';
+              selectPhone.innerHTML = '';
+              headers.forEach(function(header) {
+                var option = document.createElement('option');
+                option.text = header;
+                option.value = header;
+                selectName.appendChild(option);
+                selectPhone.appendChild(option.cloneNode(true));
+              });
+            }
+          };
+          reader.readAsText(file);
+        }
+      }
+    </script>
 </body>
 </html>
