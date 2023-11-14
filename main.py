@@ -8,28 +8,28 @@ app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET'])
 def index():
-    headers = []  # Inicialize a variável headers como uma lista vazia
-    if request.method == 'POST':
-        uploaded_file = request.files['csv_file']
-        ddd = request.form.get('ddd')
-        if uploaded_file.filename != '':
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
-            uploaded_file.save(file_path)
-            
-            # Get the CSV headers
-            with open(file_path, 'r') as file_csv:
-                reader_csv = csv.DictReader(file_csv)
-                headers = reader_csv.fieldnames  # Atualize a variável headers com os cabeçalhos do CSV
+    headers = []
+    return render_template('index.html', headers=headers)
 
-    return render_template('index.html', headers=headers)  # Passe headers como um argumento
-
-@app.route('/', methods=['POST'])
+@app.route('/process_csv', methods=['POST'])
 def process_csv():
+    headers = []  # Inicialize a variável headers como uma lista vazia
+    uploaded_file = request.files['csv_file']
+    ddd = request.form.get('ddd')
+
+    if uploaded_file.filename != '':
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
+        uploaded_file.save(file_path)
+
+        # Get the CSV headers
+        with open(file_path, 'r') as file_csv:
+            reader_csv = csv.DictReader(file_csv)
+            headers = reader_csv.fieldnames  # Atualize a variável headers com os cabeçalhos do CSV
+
     name_column = request.form.get('name_column')
     phone_column = request.form.get('phone_column')
-    ddd = request.form.get('ddd')
 
     if name_column and phone_column:
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'contato.csv')
@@ -67,11 +67,12 @@ def process_csv():
             return redirect(url_for('download', filename='contatosFormatados.csv'))
 
         except Exception as e:
+            print(f'Ocorreu um erro ao processar o arquivo CSV: {str(e)}')
             return f'Ocorreu um erro ao processar o arquivo CSV: {str(e)}'
 
     return 'Selecione as colunas corretas para o nome e o telefone.'
 
-@app.route('/download/<filename>', methods=['GET'])
+@app.route('/download/<filename>', methods=['GET', 'POST'])
 def download(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 

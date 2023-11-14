@@ -3,7 +3,7 @@ import csv
 name_csv = 'contato.csv'
 output_csv = 'contatoFormatado.csv'
 
-ddd = '62'
+ddd = '17'
 
 coluna = ['Name', 'Phone 1 - Value']
 
